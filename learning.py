@@ -37,7 +37,6 @@ num_cnn = 16
 
 
 def train_test(X, ret, label, bm, is_quantile):
-    flag = 0
     test_label = []
     y_pred = []
     if is_quantile:
@@ -52,8 +51,7 @@ def train_test(X, ret, label, bm, is_quantile):
     train_data_end_date = pd.Timestamp(year=2003, month=1, day=1)
     test_date = train_data_end_date + pd.DateOffset(months=1)
     year_check = 0
-    ######################## 1500 -> -1 변경 필요!!################################
-    while test_date < X.index[1500] - pd.DateOffset(months=1):
+    while test_date < X.index[-1] - pd.DateOffset(months=1):
         if year_check != test_date.year:
             year_check = test_date.year
             print(f'- test year {year_check} -')
@@ -102,8 +100,4 @@ def train_test(X, ret, label, bm, is_quantile):
 
         train_data_end_date += pd.DateOffset(weeks=1)
         test_date = train_data_end_date + pd.DateOffset(months=1)
-        flag += 1
-        if flag > 4:
-            break
-
     return y_pred, test_label
