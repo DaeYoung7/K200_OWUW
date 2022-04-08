@@ -1,5 +1,6 @@
 from utils import *
 
+
 # read data and make X,y
 def read_data(bm):
     data = pd.read_excel('data/'+bm+'.xlsx', sheet_name='Data', index_col='date')
@@ -16,15 +17,18 @@ def read_data(bm):
     data_all_day = data_all_day.drop(['Kospi_TV'], axis=1)
     return data, data_all_day.ffill()
 
+
 def make_label(data, price_data, bm):
     delete_last_1M = data[data.index < data.index[-1] - pd.DateOffset(months=1)].index
     future_idx = delete_last_1M + pd.DateOffset(months=1)
     future_price = price_data[bm].loc[future_idx].copy()
     future_price.index = delete_last_1M
-    label = future_price / data[bm].loc[delete_last_1M] - 1
+    ret_1m = future_price / data[bm].loc[delete_last_1M] - 1
+    label = ret_1m.copy()
     label[label > 0.0] = 1.0
     label[label < 0.0] = 0.0
-    return label
+    return ret_1m, label
+
 
 def preprocessing(data, data_all_day, bm_name):
     bm = data[bm_name]
@@ -47,6 +51,7 @@ def preprocessing(data, data_all_day, bm_name):
     data = pd.concat([diff_data, log_diff_data], axis=1)
 
     return data, bm
+
 
 def get_stationary(data):
     non_stationary = []

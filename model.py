@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+
 
 class MyModel(nn.Module):
     def __init__(self, seq_len, num_feature, num_cnn):
@@ -32,3 +32,11 @@ class MyModel(nn.Module):
         v = torch.cat([ht, a], -1)
         outputs = torch.sigmoid(self.linear(v))
         return outputs
+
+
+q = 0.5
+def quantile_loss(preds, target):
+    errors = target - preds
+    losses = torch.max((q - 1) * errors, q * errors)
+    loss = torch.mean(torch.sum(losses, dim=1))
+    return loss
