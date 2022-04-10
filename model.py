@@ -10,8 +10,8 @@ class MyModel(nn.Module):
         self.is_quantile = is_quantile
 
         # layers
-        hidden_size1 = 128
-        hidden_size2 = 32
+        hidden_size1 = 256
+        hidden_size2 = 256
         self.lstm = nn.LSTM(num_feature, hidden_size1, 2)
         self.cnn_list = nn.ModuleList([nn.Conv1d(self.seq_len, self.seq_len, hidden_size1) for i in range(self.num_cnn)])
         self.linear1 = nn.Linear(num_cnn, hidden_size2)
