@@ -9,6 +9,8 @@ if __name__ == '__main__':
     ret, label = make_label(data, data_all_day, bm_name)
     data, bm = preprocessing(data, data_all_day, bm_name)
     data = get_stationary(data)
+    # data에는 최근 데이터까지 포함, 최근 한달 데이터는 label값이 없음(1달 수익률 구할 수 없기 때문)
+    data = data.loc[label.index]
     print('[Complete data managing]')
     print(f'data shape : {data.shape}')
     print('\n[Start Learning]')
