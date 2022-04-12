@@ -103,9 +103,9 @@ def train_test(train_x, train_y, val_x, val_y, is_quantile, nth_fold):
     val_x = mms.transform(val_x)
     val_loader = data_loader(val_x, val_y, batch_size, seq_len)
 
-    net = MyModel(seq_len, train_x.shape[-1], num_cnn, is_quantile)
+    net = MyModel(seq_len, train_x.shape[-1], is_quantile)
     net.to(device)
-    optimizer = optim.Adam(net.parameters(), lr=0.005)
+    optimizer = optim.Adam(net.parameters(), lr=0.001)
     taccu, vaccu = 0., 0.
     for epoch in range(epochs):
         tloss = 0.0
