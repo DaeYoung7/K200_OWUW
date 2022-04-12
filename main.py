@@ -3,9 +3,11 @@ from learning_kfold import *
 
 bm_name = 'K200'
 is_quantile = True
-num_fold = 3
+num_fold = 5
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+    print(f'Use GPU: {torch.cuda.is_available()}')
+    # exit()
     data, data_all_day = read_data(bm_name)
     ret, label = make_label(data, data_all_day, bm_name)
     data, bm = preprocessing(data, data_all_day, bm_name)
@@ -18,5 +20,3 @@ if __name__ == '__main__':
     print('\n[Start Learning]')
     kfold(data, ret, label, num_fold, is_quantile)
     print('[Finish Learning]')
-    # pred_label = save_result(y_pred, test_label, bm_name)
-    # analyzing(pred_label, test_label)
