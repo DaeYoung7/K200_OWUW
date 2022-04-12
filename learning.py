@@ -29,11 +29,10 @@ def data_loader(data, label, batch_size, seq_len):
     return train_loader
 
 
-epochs = 2
+epochs = 50
 batch_size = 32
 seq_len = 252
 corr_term = 252 * 1
-num_cnn = 16
 
 
 def train_test(X, ret, label, bm, is_quantile):
@@ -41,14 +40,14 @@ def train_test(X, ret, label, bm, is_quantile):
     y_pred = []
     if is_quantile:
         y = ret.copy()
-        loss_fn = quantile_loss
+        loss_fn = nn.L1Loss()
         criterion = 0.
     else:
         y = label.copy()
         loss_fn = nn.BCELoss()
         criterion = 0.5
     # 상관관계를 파악할 기간 (day)
-    train_data_end_date = pd.Timestamp(year=2003, month=1, day=1)
+    train_data_end_date = pd.Timestamp(year=2016, month=1, day=1)
     test_date = train_data_end_date + pd.DateOffset(months=1)
     year_check = 0
     while test_date < X.index[-1] - pd.DateOffset(months=1):
@@ -68,13 +67,13 @@ def train_test(X, ret, label, bm, is_quantile):
         test_x = torch.tensor(test_x.reshape(-1, seq_len, len(bm_related_cols)), dtype=torch.float32)
         test_y = label.iloc[test_idx]
 
-        net = MyModel(seq_len, len(bm_related_cols), num_cnn, is_quantile)
+        net = MyModel(seq_len, len(bm_related_cols), is_quantile)
         optimizer = optim.Adam(net.parameters(), lr=0.001)
         for epoch in range(epochs):
             tloss = 0.0
             tcorrect = 0.0
             total_len = 0.0
-            net.train(True)
+            net.train()
             for i, tdata in enumerate(train_loader, 1):
                 train_data, train_label = tdata
                 optimizer.zero_grad()
@@ -94,7 +93,7 @@ def train_test(X, ret, label, bm, is_quantile):
             avg_loss = tloss / i
             tcorrect /= total_len
             print(f'Epoch {epoch+1}  accuracy {round(tcorrect, 4)}  loss {round(avg_loss, 4)}')
-        net.train(False)
+        net.eval()
         y_pred.append(net(test_x).detach().numpy()[0])
         test_label.append(test_y)
 
