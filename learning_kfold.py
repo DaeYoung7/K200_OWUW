@@ -10,8 +10,9 @@ from model import *
 
 device_name = 'cuda' if torch.cuda.is_available() else 'cpu'
 device = torch.device(device_name)
-epochs = 50
-batch_size = 16
+epochs = 200
+lr = 1e-4
+batch_size = 32
 seq_len = 252
 corr_term = 252 * 1
 num_cnn = 32
@@ -91,7 +92,8 @@ def train_test(train_x, train_y, val_x, val_y, is_quantile, nth_fold):
     tlosses = []
     vlosses = []
     if is_quantile:
-        loss_fn = quantile_loss
+        # loss_fn = quantile_loss
+        loss_fn = nn.L1Loss()
         criterion = 0.
     else:
         loss_fn = nn.BCELoss()
@@ -105,8 +107,12 @@ def train_test(train_x, train_y, val_x, val_y, is_quantile, nth_fold):
 
     net = MyModel(seq_len, train_x.shape[-1], is_quantile)
     net.to(device)
-    optimizer = optim.Adam(net.parameters(), lr=0.001)
+    optimizer = optim.Adam(net.parameters(), lr=lr)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, 100)
     taccu, vaccu = 0., 0.
+    min_val_loss = 1e5
+    min_val_accu = 0.
+    early_stop_cnt = 0
     for epoch in range(epochs):
         tloss = 0.0
         vloss = 0.0
@@ -154,8 +160,20 @@ def train_test(train_x, train_y, val_x, val_y, is_quantile, nth_fold):
         f'val accuracy {round(vaccu*100, 4)}  val loss {round(val_avg_loss, 4)}')
         tlosses.append(round(avg_loss, 4))
         vlosses.append(round(val_avg_loss, 4))
+        scheduler.step()
+
+        # early stopping
+        if val_avg_loss < min_val_loss:
+            min_val_loss = val_avg_loss
+            min_val_accu = vaccu
+            early_stop_cnt = 0
+        else:
+            early_stop_cnt += 1
+
+        if early_stop_cnt > 30:
+            break
     plt.plot(tlosses, label='train')
     plt.plot(vlosses, label='val')
     plt.legend()
     plt.savefig(f'result/fold{nth_fold}.png')
-    return taccu, vaccu
+    return taccu, min_val_accu
