@@ -1,3 +1,4 @@
+import os
 import inflect
 import numpy as np
 import pandas as pd
@@ -48,6 +49,7 @@ def data_loader(data, label, batch_size, seq_len):
 def realtime_test(X, ret, label, bm, ts_layer, is_quantile):
     test_label = []
     y_pred = []
+    dates = []
     if is_quantile:
         y = ret.copy()
         loss_fn = nn.L1Loss()
@@ -57,14 +59,24 @@ def realtime_test(X, ret, label, bm, ts_layer, is_quantile):
         loss_fn = nn.BCELoss()
         criterion = 0.5
 
-    # 상관관계를 파악할 기간 (day)
+    filepath = 'result/learning.csv'
+    if os.path.exists(filepath):
+        last_result = pd.read_csv(filepath, index_col='date', parse_dates=True)
+        year_check = last_result.index[-1].year + 1
+    else:
+        year_check = 2016
+        last_result = pd.DataFrame()
     train_data_end_date = pd.Timestamp(year=2016, month=1, day=1)
     test_date = train_data_end_date + pd.DateOffset(months=1)
-    year_check = 0
+
     while test_date < X.index[-1] - pd.DateOffset(months=1):
-        if year_check != test_date.year:
-            year_check = test_date.year
+        # 1년마다 저장
+        if year_check != train_data_end_date.year:
+            year_check = train_data_end_date.year
             print(f'- test year {year_check} -')
+            result = pd.DataFrame({'date':dates, 'pred_ret':y_pred, 'test_label':test_label}, index='date')
+            result = pd.concat([last_result, result])
+            result.to_csv(filepath)
         train_data_end_idx = sum(X.index < train_data_end_date)
         test_idx = sum(X.index < test_date) + 1
 
@@ -107,9 +119,11 @@ def realtime_test(X, ret, label, bm, ts_layer, is_quantile):
         net.eval()
         y_pred.append(net(test_x).detach().numpy()[0])
         test_label.append(test_y)
+        dates.append(X.index[test_idx])
 
         train_data_end_date += pd.DateOffset(weeks=1)
         test_date = train_data_end_date + pd.DateOffset(months=1)
+
     return y_pred, test_label
 
 
