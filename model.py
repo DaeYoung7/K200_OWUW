@@ -3,7 +3,7 @@ import torch.nn as nn
 
 
 class MyModel(nn.Module):
-    def __init__(self, seq_len, num_feature, ts_layer, is_quantile):
+    def __init__(self, seq_len, num_feature, num_heads, ts_layer, is_quantile):
         super().__init__()
         self.seq_len = seq_len
         self.is_quantile = is_quantile
@@ -21,7 +21,7 @@ class MyModel(nn.Module):
         if ts_layer == 'lstm':
             self.ts_layer = nn.LSTM(num_feature, w_hidden_size, 2)
         elif ts_layer == 'transformer':
-            encoder_layer = nn.TransformerEncoderLayer(num_feature, 4, 512)
+            encoder_layer = nn.TransformerEncoderLayer(num_feature, num_heads, 512)
             self.ts_layer = nn.TransformerEncoder(encoder_layer, 1)
         self.batch_norm1 = nn.BatchNorm1d(seq_len)
         self.weight = nn.Linear(w_hidden_size, cnn_hidden_size, bias=False)
