@@ -3,6 +3,7 @@ from learning import *
 
 bm_name = 'K200'
 is_quantile = True
+ts_layer = 'transformer' # 'lstm'
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     data, data_all_day = read_data(bm_name)
@@ -14,7 +15,7 @@ if __name__ == '__main__':
     print('[Complete data managing]')
     print(f'data shape : {data.shape}')
     print('\n[Start Learning]')
-    y_pred, test_label = train_test(data, ret, label, bm, is_quantile)
+    y_pred, test_label = train_test(data, ret, label, bm, ts_layer, is_quantile)
     print('[Finish Learning]')
     pred_label = save_result(y_pred, test_label, bm_name)
     analyzing(pred_label, test_label)

@@ -1,32 +1,37 @@
 import numpy as np
 import pandas as pd
+import torch.cuda
 from sklearn.preprocessing import MinMaxScaler
 from torch.utils.data import TensorDataset, DataLoader
 import torch.optim as optim
 
 from model import *
-
+device_name = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = torch.device(device_name)
 
 def correlation(bm, data, date_idx, term):
     corr = pd.concat([bm[date_idx-term:date_idx], data[date_idx-term:date_idx]], axis=1).corr()
-    corr_abs = abs(corr.iloc[0])
+    corr_abs = abs(corr.iloc[0]).sort_values(ascending=False)
+    num_cols = len(corr_abs[corr_abs > 0.3].index[1:])
+    while num_cols % 4 !=0:
+        num_cols += 1
     # bm 제외
-    return corr_abs[corr_abs > 0.3].index[1:]
+    return corr_abs.index[1:num_cols+1]
 
 
 def data_loader(data, label, batch_size, seq_len):
-    train_x = []
-    train_y = []
+    x = []
+    y = []
     i = seq_len
     while i < len(data):
-        train_x.append(data[i-seq_len:i])
-        train_y.append(label.values[i])
+        x.append(data[i-seq_len:i])
+        y.append(label.values[i])
         i += 1
-    train_x_tensor = torch.tensor(np.array(train_x, dtype=np.float32))
-    train_y_tensor = torch.tensor(np.array(train_y, dtype=np.float32).reshape(-1,1))
-    train_dataset = TensorDataset(train_x_tensor, train_y_tensor)
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
-    return train_loader
+    x_tensor = torch.tensor(np.array(x, dtype=np.float32)).to(device)
+    y_tensor = torch.tensor(np.array(y, dtype=np.float32).reshape(-1,1)).to(device)
+    dataset = TensorDataset(x_tensor, y_tensor)
+    loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+    return loader
 
 
 epochs = 50
@@ -35,7 +40,7 @@ seq_len = 252
 corr_term = 252 * 1
 
 
-def train_test(X, ret, label, bm, is_quantile):
+def train_test(X, ret, label, bm, ts_layer, is_quantile):
     test_label = []
     y_pred = []
     if is_quantile:
@@ -67,7 +72,7 @@ def train_test(X, ret, label, bm, is_quantile):
         test_x = torch.tensor(test_x.reshape(-1, seq_len, len(bm_related_cols)), dtype=torch.float32)
         test_y = label.iloc[test_idx]
 
-        net = MyModel(seq_len, len(bm_related_cols), is_quantile)
+        net = MyModel(seq_len, len(bm_related_cols), ts_layer, is_quantile).to(device)
         optimizer = optim.Adam(net.parameters(), lr=0.001)
         for epoch in range(epochs):
             tloss = 0.0
