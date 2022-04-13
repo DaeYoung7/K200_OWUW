@@ -13,7 +13,7 @@ from model import *
 
 device_name = 'cuda' if torch.cuda.is_available() else 'cpu'
 device = torch.device(device_name)
-epochs = 5
+epochs = 100
 lr = 1e-4
 batch_size = 32
 seq_len = 252
@@ -62,11 +62,12 @@ def realtime_test(X, ret, label, bm, ts_layer, is_quantile):
     filepath = 'result/learning.csv'
     if os.path.exists(filepath):
         last_result = pd.read_csv(filepath, index_col='date', parse_dates=True)
-        year_check = last_result.index[-1].year + 1
+        train_data_end_date = last_result.index[-1] + pd.DateOffset(weeks=1)
+        year_check = train_data_end_date.year
     else:
         year_check = 2016
         last_result = pd.DataFrame()
-    train_data_end_date = pd.Timestamp(year=2016, month=1, day=1)
+        train_data_end_date = pd.Timestamp(year=2016, month=1, day=1)
     test_date = train_data_end_date + pd.DateOffset(months=1)
 
     while test_date < X.index[-1] - pd.DateOffset(months=1):
@@ -74,8 +75,8 @@ def realtime_test(X, ret, label, bm, ts_layer, is_quantile):
         if year_check != train_data_end_date.year:
             year_check = train_data_end_date.year
             print(f'- test year {year_check} -')
-            result = pd.DataFrame({'date':dates, 'pred_ret':y_pred, 'test_label':test_label}, index='date')
-            result = pd.concat([last_result, result])
+            result = pd.DataFrame({'date':dates, 'pred_ret':y_pred, 'test_label':test_label})
+            result = pd.concat([last_result, result.set_index('date')])
             result.to_csv(filepath)
         train_data_end_idx = sum(X.index < train_data_end_date)
         test_idx = sum(X.index < test_date) + 1
@@ -117,11 +118,11 @@ def realtime_test(X, ret, label, bm, ts_layer, is_quantile):
             tcorrect /= total_len
             print(f'Epoch {epoch+1}  accuracy {round(tcorrect, 4)}  loss {round(avg_loss, 4)}')
         net.eval()
-        y_pred.append(net(test_x).detach().numpy()[0])
+        y_pred.append(net(test_x).detach().item())
         test_label.append(test_y)
         dates.append(X.index[test_idx])
 
-        train_data_end_date += pd.DateOffset(months=6)
+        train_data_end_date += pd.DateOffset(weeks=1)
         test_date = train_data_end_date + pd.DateOffset(months=1)
 
     return y_pred, test_label

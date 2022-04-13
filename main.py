@@ -19,7 +19,7 @@ if __name__ == '__main__':
     print('\n[Start Learning]')
     if is_test:
         y_pred, test_label = realtime_test(data, ret, label, bm, ts_layer, is_quantile)
-        pred_label = save_result(y_pred, test_label, bm_name)
+        pred_label = save_result(y_pred, test_label, bm_name, is_quantile)
         analyzing(pred_label, test_label)
     else:
         num_fold = 5
