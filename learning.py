@@ -13,7 +13,7 @@ from model import *
 
 device_name = 'cuda' if torch.cuda.is_available() else 'cpu'
 device = torch.device(device_name)
-epochs = 50
+epochs = 5
 lr = 1e-4
 batch_size = 32
 seq_len = 252
@@ -87,7 +87,7 @@ def realtime_test(X, ret, label, bm, ts_layer, is_quantile):
         train_y = y[:train_data_end_idx]
         train_loader = data_loader(train_x, train_y, batch_size, seq_len)
         test_x = mms.transform(X[bm_related_cols][test_idx-seq_len:test_idx])
-        test_x = torch.tensor(test_x.reshape(-1, seq_len, len(bm_related_cols)), dtype=torch.float32)
+        test_x = torch.tensor(test_x.reshape(-1, seq_len, len(bm_related_cols)), dtype=torch.float32).to(device)
         test_y = label.iloc[test_idx]
 
         net = MyModel(seq_len, len(bm_related_cols), num_heads, ts_layer, is_quantile).to(device)
@@ -121,7 +121,7 @@ def realtime_test(X, ret, label, bm, ts_layer, is_quantile):
         test_label.append(test_y)
         dates.append(X.index[test_idx])
 
-        train_data_end_date += pd.DateOffset(weeks=1)
+        train_data_end_date += pd.DateOffset(months=6)
         test_date = train_data_end_date + pd.DateOffset(months=1)
 
     return y_pred, test_label

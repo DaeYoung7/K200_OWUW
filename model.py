@@ -22,7 +22,7 @@ class MyModel(nn.Module):
             self.ts_layer = nn.LSTM(num_feature, w_hidden_size, 2)
         elif ts_layer == 'transformer':
             encoder_layer = nn.TransformerEncoderLayer(num_feature, num_heads, 512)
-            self.ts_layer = nn.TransformerEncoder(encoder_layer, 1)
+            self.ts_layer = nn.TransformerEncoder(encoder_layer, 3)
         self.batch_norm1 = nn.BatchNorm1d(seq_len)
         self.weight = nn.Linear(w_hidden_size, cnn_hidden_size, bias=False)
         self.batch_norm2 = nn.BatchNorm1d(seq_len)
