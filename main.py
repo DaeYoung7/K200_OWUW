@@ -1,7 +1,7 @@
 from data_manager import *
 from learning import *
 
-is_test = True  # false to apply k-fold
+is_test = False  # false to apply k-fold
 bm_name = 'K200'
 is_quantile = True
 ts_layer = 'transformer'  # 'lstm'

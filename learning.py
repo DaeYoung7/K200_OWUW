@@ -13,7 +13,7 @@ from model import *
 
 device_name = 'cuda' if torch.cuda.is_available() else 'cpu'
 device = torch.device(device_name)
-epochs = 100
+epochs = 200
 lr = 1e-4
 batch_size = 32
 seq_len = 252
@@ -52,7 +52,7 @@ def realtime_test(X, ret, label, bm, ts_layer, is_quantile):
     dates = []
     if is_quantile:
         y = ret.copy()
-        loss_fn = nn.L1Loss()
+        loss_fn = nn.MSELoss()
         criterion = 0.
     else:
         y = label.copy()
@@ -60,21 +60,20 @@ def realtime_test(X, ret, label, bm, ts_layer, is_quantile):
         criterion = 0.5
 
     filepath = 'result/learning.csv'
+    month_check = 1
     if os.path.exists(filepath):
         last_result = pd.read_csv(filepath, index_col='date', parse_dates=True)
         train_data_end_date = last_result.index[-1] + pd.DateOffset(weeks=1)
-        year_check = train_data_end_date.year
+        month_check = train_data_end_date.month
     else:
-        year_check = 2016
         last_result = pd.DataFrame()
         train_data_end_date = pd.Timestamp(year=2016, month=1, day=1)
     test_date = train_data_end_date + pd.DateOffset(months=1)
 
     while test_date < X.index[-1] - pd.DateOffset(months=1):
-        # 1년마다 저장
-        if year_check != train_data_end_date.year:
-            year_check = train_data_end_date.year
-            print(f'- test year {year_check} -')
+        # 1달마다 저장
+        if month_check != train_data_end_date.month:
+            month_check = train_data_end_date.month
             result = pd.DataFrame({'date':dates, 'pred_ret':y_pred, 'test_label':test_label})
             result = pd.concat([last_result, result.set_index('date')])
             result.to_csv(filepath)
@@ -188,7 +187,7 @@ def kfold_test(train_x, train_y, val_x, val_y, ts_layer, is_quantile, nth_fold):
     vlosses = []
     if is_quantile:
         # loss_fn = quantile_loss
-        loss_fn = nn.L1Loss()
+        loss_fn = nn.MSELoss()
         criterion = 0.
     else:
         loss_fn = nn.BCELoss()
@@ -271,4 +270,5 @@ def kfold_test(train_x, train_y, val_x, val_y, ts_layer, is_quantile, nth_fold):
     plt.plot(vlosses, label='val')
     plt.legend()
     plt.savefig(f'result/fold{nth_fold}.png')
+    plt.clf()
     return taccu, min_val_accu
