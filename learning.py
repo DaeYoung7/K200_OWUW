@@ -11,9 +11,14 @@ import torch.optim as optim
 
 from model import *
 
-device_name = 'cuda' if torch.cuda.is_available() else 'cpu'
+if torch.cuda.is_available():
+    device_name = 'cuda'
+    print('Use GPU')
+else:
+    device_name = 'cpu'
+    print('Use CPU')
 device = torch.device(device_name)
-epochs = 200
+epochs = 150
 lr = 1e-4
 batch_size = 32
 seq_len = 252
@@ -73,6 +78,7 @@ def realtime_test(X, ret, label, bm, ts_layer, is_quantile):
     while test_date < X.index[-1] - pd.DateOffset(months=1):
         # 1달마다 저장
         if month_check != train_data_end_date.month:
+            print(train_data_end_date)
             month_check = train_data_end_date.month
             result = pd.DataFrame({'date':dates, 'pred_ret':y_pred, 'test_label':test_label})
             result = pd.concat([last_result, result.set_index('date')])
@@ -99,6 +105,8 @@ def realtime_test(X, ret, label, bm, ts_layer, is_quantile):
             net.train()
             for i, tdata in enumerate(train_loader, 1):
                 train_data, train_label = tdata
+                if train_data.shape[0] == 1:
+                    continue
                 optimizer.zero_grad()
                 outputs = net(train_data)
                 loss = loss_fn(outputs, train_label)
