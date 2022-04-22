@@ -1,13 +1,20 @@
 from data_manager import *
 from learning import *
 
-is_test = False  # false to apply k-fold
+import sys
+import logging
+import argparse
+
 bm_name = 'K200'
-is_quantile = True
-ts_layer = 'transformer'  # 'lstm'
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--test', required=True)  # true - test, false - kfold
+    parser.add_argument('--quantile', required=True)  # true - quantile, false - binary classification
+    parser.add_argument('--ts_layer', required=True)  # transformer or lstm
+    args = parser.parse_args()
+
     data, data_all_day = read_data(bm_name)
     ret, label = make_label(data, data_all_day, bm_name)
     data, bm = preprocessing(data, data_all_day, bm_name)
@@ -17,11 +24,11 @@ if __name__ == '__main__':
     print('[Complete data managing]')
     print(f'data shape : {data.shape}')
     print('\n[Start Learning]')
-    if is_test:
-        y_pred, test_label = realtime_test(data, ret, label, bm, ts_layer, is_quantile)
-        pred_label = save_result(y_pred, test_label, bm_name, is_quantile)
+    if args.test:
+        y_pred, test_label = realtime_test(data, ret, label, bm, args.ts_layer, args.quantile)
+        pred_label = save_result(y_pred, test_label, bm_name, args.quantile)
         analyzing(pred_label, test_label)
     else:
         num_fold = 5
-        purged_kfold(data, ret, label, num_fold, ts_layer, is_quantile)
+        purged_kfold(data, ret, label, num_fold, args.ts_layer, args.quantile)
     print('[Finish Learning]')
