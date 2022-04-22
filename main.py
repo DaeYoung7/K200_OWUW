@@ -1,8 +1,6 @@
 from data_manager import *
 from learning import *
 
-import sys
-import logging
 import argparse
 
 bm_name = 'K200'

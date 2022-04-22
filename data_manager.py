@@ -19,8 +19,8 @@ def read_data(bm):
 
 
 def make_label(data, price_data, bm):
-    delete_last_1M = data[data.index < data.index[-1] - pd.DateOffset(months=2)].index
-    future_idx = delete_last_1M + pd.DateOffset(months=2)
+    delete_last_1M = data[data.index < data.index[-1] - pd.DateOffset(months=1)].index
+    future_idx = delete_last_1M + pd.DateOffset(months=1)
     future_price = price_data[bm].loc[future_idx].copy()
     future_price.index = delete_last_1M
     ret_1m = future_price / data[bm].loc[delete_last_1M] - 1

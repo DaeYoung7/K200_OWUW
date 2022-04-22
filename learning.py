@@ -68,14 +68,14 @@ def realtime_test(X, ret, label, bm, ts_layer, is_quantile):
     month_check = 1
     if os.path.exists(filepath):
         last_result = pd.read_csv(filepath, index_col='date', parse_dates=True)
-        train_data_end_date = last_result.index[-1] + pd.DateOffset(weeks=1) - pd.DateOffset(months=2)
+        train_data_end_date = last_result.index[-1] + pd.DateOffset(weeks=1) - pd.DateOffset(months=1)
         month_check = train_data_end_date.month
     else:
         last_result = pd.DataFrame()
         train_data_end_date = pd.Timestamp(year=2016, month=1, day=1)
-    test_date = train_data_end_date + pd.DateOffset(months=2)
+    test_date = train_data_end_date + pd.DateOffset(months=1)
 
-    while test_date < X.index[-1] - pd.DateOffset(months=2):
+    while test_date < X.index[-1] - pd.DateOffset(months=1):
         # 1달마다 저장
         if month_check != train_data_end_date.month:
             print(train_data_end_date)
@@ -130,7 +130,7 @@ def realtime_test(X, ret, label, bm, ts_layer, is_quantile):
         dates.append(X.index[test_idx])
 
         train_data_end_date += pd.DateOffset(weeks=1)
-        test_date = train_data_end_date + pd.DateOffset(months=2)
+        test_date = train_data_end_date + pd.DateOffset(months=1)
 
     return y_pred, test_label
 
@@ -153,7 +153,7 @@ def purged_kfold(X, ret, label, num_fold, ts_layer, is_quantile):
     val_end_idx = len(X) - 1
     val_start_idx = val_end_idx - val_len
     val_start_date = X.index[val_start_idx]
-    train1_end_date = val_start_date - pd.DateOffset(months=2)
+    train1_end_date = val_start_date - pd.DateOffset(months=1)
     train1_end_idx = sum(X.index < train1_end_date)
     train2_start_date, train2_start_idx = None, None
     for i in range(num_fold):
