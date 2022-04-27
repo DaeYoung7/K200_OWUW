@@ -21,7 +21,6 @@ if __name__ == '__main__':
     print(f'data shape : {data.shape}')
     print('\n[Start Learning]')
     if args.test is True:
-        print('asdf')
         y_pred, test_label = realtime_test(input_data, ret, label, bm, args.ts_layer, args.quantile)
         pred_label = save_result(y_pred, test_label, bm_name, args.quantile)
         analyzing(pred_label, test_label)

@@ -64,7 +64,7 @@ def realtime_test(X, ret, label, bm, ts_layer, is_quantile):
         loss_fn = nn.BCELoss()
         criterion = 0.5
 
-    filepath = 'result/learning.csv'
+    filepath = 'result/learning_deep_factor.csv'
     month_check = 1
     if os.path.exists(filepath):
         last_result = pd.read_csv(filepath, index_col='date', parse_dates=True)
@@ -85,20 +85,20 @@ def realtime_test(X, ret, label, bm, ts_layer, is_quantile):
             result.to_csv(filepath)
         train_data_end_idx = sum(X.index < train_data_end_date)
         test_idx = sum(X.index < test_date) + 1
-
-        bm_related_cols = correlation(bm, X, train_data_end_idx, corr_term)
-        train_x = X[bm_related_cols][:train_data_end_idx]
+        # bm_related_cols = correlation(bm, X, train_data_end_idx, corr_term)
+        train_x = X[:train_data_end_idx]
         mms = MinMaxScaler((-1,1))
         train_x = mms.fit_transform(train_x)
         train_y = y[:train_data_end_idx]
         train_loader = data_loader(train_x, train_y, batch_size, seq_len)
-        test_x = mms.transform(X[bm_related_cols][test_idx-seq_len:test_idx])
-        test_x = torch.tensor(test_x.reshape(-1, seq_len, len(bm_related_cols)), dtype=torch.float32).to(device)
+        test_x = mms.transform(X[test_idx-seq_len:test_idx])
+        test_x = torch.tensor(test_x.reshape(-1, seq_len, X.shape[-1]), dtype=torch.float32).to(device)
         test_y = label.iloc[test_idx]
 
-        net = MyModel(seq_len, len(bm_related_cols), num_heads, ts_layer, is_quantile).to(device)
+        net = MyModel(seq_len, X.shape[-1], num_heads, ts_layer, is_quantile).to(device)
         optimizer = optim.Adam(net.parameters(), lr=lr)
         for epoch in range(epochs):
+            print(epoch)
             tloss = 0.0
             tcorrect = 0.0
             total_len = 0.0
