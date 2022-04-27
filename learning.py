@@ -98,7 +98,6 @@ def realtime_test(X, ret, label, bm, ts_layer, is_quantile):
         net = MyModel(seq_len, X.shape[-1], num_heads, ts_layer, is_quantile).to(device)
         optimizer = optim.Adam(net.parameters(), lr=lr)
         for epoch in range(epochs):
-            print(epoch)
             tloss = 0.0
             tcorrect = 0.0
             total_len = 0.0
