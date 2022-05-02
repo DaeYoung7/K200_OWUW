@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
 
 epochs = 150
 lr = 1e-4
@@ -14,46 +15,38 @@ corr_term = 252 * 1
 p = inflect.engine()
 
 
-def correlation(bm, data, date_idx, term):
-    corr = pd.concat([bm[date_idx-term:date_idx], data[date_idx-term:date_idx]], axis=1).corr()
-    corr_abs = abs(corr.iloc[0]).sort_values(ascending=False)
-    num_cols = len(corr_abs[corr_abs > 0.3].index[1:])
-    while num_cols % num_heads !=0:
-        num_cols += 1
-    # bm 제외
-    return corr_abs.index[1:num_cols+1]
-
-
 def realtime_test(X, y, bm):
     cnt = 0
-    test_label = []
-    y_pred = []
-    dates = []
+    pd.DataFrame(columns=list(X.columns)+['date', 'LR', 'SVM', 'label'])
 
-    month_check = 1
-    train_data_end_date = pd.Timestamp(year=2016, month=1, day=1)
-    test_date = train_data_end_date + pd.DateOffset(months=1)
+    year_check = 1
+    train_end_date = pd.Timestamp(year=2012, month=1, day=1)
+    next_train_end_date = train_end_date + pd.DateOffset(weeks=1)
+    test_date = train_end_date + pd.DateOffset(months=1)
 
     while test_date < X.index[-1] - pd.DateOffset(months=1):
         # 1달마다 저장
-        if month_check != train_data_end_date.month:
-            print(train_data_end_date)
-            month_check = train_data_end_date.month
-        train_data_end_idx = sum(X.index < train_data_end_date)
+        if year_check != train_end_date.month:
+            print(train_end_date)
+            year_check = train_end_date.month
+        train_end_idx = sum(X.index < train_end_date)
         test_idx = sum(X.index < test_date) + 1
 
-        bm_related_cols = correlation(bm, X, train_data_end_idx, corr_term)
-        train_x = X[bm_related_cols][:train_data_end_idx]
-        mms = MinMaxScaler((-1,1))
+        train_x = X[:train_end_idx]
+        mms = MinMaxScaler((0,1))
         train_x = mms.fit_transform(train_x)
-        train_y = y[:train_data_end_idx]
-        test_x = mms.transform(X[bm_related_cols].iloc[test_idx].values.reshape((1,-1)))
+        train_y = y[:train_end_idx]
+        test_x = mms.transform(X.iloc[test_idx].values.reshape((1,-1)))
         test_y = y.iloc[test_idx]
 
-        model = LogisticRegression(C=0.1, penalty='l1', solver='saga')
-        model.fit(train_x, train_y)
+        LR_model = LogisticRegression(C=0.1, penalty='l1', solver='saga')
+        LR_model.fit(train_x, train_y)
+        lr_pred = LR_model.predict(test_x)
 
-        y_pred.append(model.predict(test_x))
+        LR_model = SVC(C=0.1, penalty='l1', solver='saga')
+        LR_model.fit(train_x, train_y)
+        lr_pred = LR_model.predict(test_x)
+
         test_label.append(test_y)
         dates.append(X.index[test_idx])
 
