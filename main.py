@@ -8,8 +8,8 @@ bm_name = 'K200'
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--test', required=True)  # true - test, false - kfold
-    parser.add_argument('--quantile', required=True)  # true - quantile, false - binary classification
+    parser.add_argument('--test', action='store_true', default=False)  # true - test, false - kfold
+    parser.add_argument('--quantile', action='store_true', default=False)  # true - quantile, false - binary classification
     parser.add_argument('--ts_layer', required=True)  # transformer or lstm
     args = parser.parse_args()
 
