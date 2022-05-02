@@ -18,7 +18,7 @@ else:
     device_name = 'cpu'
     print('Use CPU')
 device = torch.device(device_name)
-epochs = 150
+epochs = 50
 lr = 1e-4
 batch_size = 32
 seq_len = 252
