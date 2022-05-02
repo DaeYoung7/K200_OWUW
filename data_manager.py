@@ -60,3 +60,4 @@ def get_stationary(data):
             non_stationary.append(c)
     print(f'불안정시계열 : {non_stationary}')
     return data.drop(non_stationary,axis=1)
+

@@ -39,15 +39,13 @@ def is_stationary(tseries):
         ret = True
     return ret
 
-def save_result(y_pred, test_label, bm_name, is_quantile):
-    criterion = 0. if is_quantile else 0.5
+def save_result(y_pred, test_label, dates, bm_name):
     pred_label = np.array(y_pred.copy())
-    y_pred = pd.DataFrame(y_pred, columns=['y_pred'])
-    pred_label[pred_label > criterion] = 1.0
-    pred_label[pred_label < criterion] = 0.0
-    y_pred['pred_label'] = pred_label
+    y_pred = pd.DataFrame(pred_label, columns=['pred_label'])
     test_label = pd.DataFrame(test_label, columns=['test_label'])
     result = pd.concat([y_pred, test_label], axis=1)
+    result['date'] = dates
+    result = result.set_index('date')
     result.to_csv('result/'+bm_name+'.csv')
     return pred_label
 
