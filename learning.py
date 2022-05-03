@@ -127,6 +127,8 @@ def realtime_test(X, ret, label, bm, args):
             avg_loss = tloss / i
             tcorrect /= total_len
             print(f'Epoch {epoch+1}  accuracy {round(tcorrect, 4)}  loss {round(avg_loss, 4)}')
+            if tcorrect > 0.8:
+                break
         net.eval()
         y_pred.append(net(test_x).detach().item())
         test_label.append(test_y)
