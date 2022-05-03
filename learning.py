@@ -19,20 +19,24 @@ p = inflect.engine()
 def realtime_test(X, y):
     result = pd.DataFrame(columns=list(X.columns)+['LR', 'SVC', 'label'])
 
-    year_check = 1
-    train_end_date = pd.Timestamp(year=2017, month=8, day=1)
+    month_check = 1
+    train_end_date = pd.Timestamp(year=2012, month=1, day=1)
     next_train_end_date = train_end_date + pd.DateOffset(weeks=1)
     test_date = train_end_date + pd.DateOffset(months=1)
     next_test_date = next_train_end_date + pd.DateOffset(months=1)
-
     while test_date < X.index[-1] - pd.DateOffset(weeks=1):
-        # 1달마다 저장
-        if year_check != train_end_date.month:
+        if month_check != train_end_date.month:
             print(train_end_date)
-            year_check = train_end_date.month
+            month_check = train_end_date.month
         train_end_idx = sum(X.index < train_end_date)
         test_idx = sum(X.index < test_date)
         next_test_idx = sum(X.index < next_test_date)
+        if next_test_idx - test_idx < 1:
+            train_end_date = next_train_end_date
+            next_train_end_date += pd.DateOffset(weeks=1)
+            test_date = next_test_date
+            next_test_date = next_train_end_date + pd.DateOffset(months=1)
+            continue
 
         train_x = X[:train_end_idx].values
         mms = MinMaxScaler((0,1))
@@ -68,20 +72,27 @@ def ensemble(data):
 
     train_end_date = pd.Timestamp(year=2018, month=1, day=1)
     test_date = train_end_date + pd.DateOffset(months=1)
+    month_check = 1
 
     rf_preds = []
     rf_labels = []
-    while test_date < X.index[-1] - pd.DateOffset(weeks=1):
-        train_end_idx = sum(train_end_date < X.index)
-        test_idx = sum(test_date < X.index)
+    while test_date < X.index[-1]:
+        if month_check != train_end_date.month:
+            print(train_end_date)
+            month_check = train_end_date.month
+        train_end_idx = sum(X.index < train_end_date)
+        test_idx = sum(X.index < test_date)
         train_x = X[:train_end_idx].values
         train_y = y[:train_end_idx].values.ravel()
         test_x = X.iloc[test_idx].values.reshape(1,-1)
-        test_y = y.iloc[test_idx].values
+        test_y = y.iloc[test_idx]
         RF_model = RandomForestClassifier(max_depth=40, max_features=16, n_estimators=100)
         RF_model.fit(train_x, train_y)
         rf_pred = RF_model.predict(test_x)
 
         rf_preds.append(rf_pred)
         rf_labels.append(test_y)
+
+        train_end_date += pd.DateOffset(weeks=1)
+        test_date = train_end_date + pd.DateOffset(months=1)
     return np.array(rf_preds), np.array(rf_labels)
