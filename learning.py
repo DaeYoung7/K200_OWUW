@@ -51,11 +51,11 @@ def data_loader(data, label, batch_size, seq_len):
     return loader
 
 
-def realtime_test(X, ret, label, bm, ts_layer, is_quantile):
+def realtime_test(X, ret, label, bm, args):
     test_label = []
     y_pred = []
     dates = []
-    if is_quantile:
+    if args.quantile:
         y = ret.copy()
         loss_fn = nn.MSELoss()
         criterion = 0.
@@ -86,7 +86,10 @@ def realtime_test(X, ret, label, bm, ts_layer, is_quantile):
         train_data_end_idx = sum(X.index < train_data_end_date)
         test_idx = sum(X.index < test_date) + 1
 
-        bm_related_cols = correlation(bm, X, train_data_end_idx, corr_term)
+        if args.corr:
+            bm_related_cols = correlation(bm, X, train_data_end_idx, corr_term)
+        else:
+            bm_related_cols = X.columns
         train_x = X[bm_related_cols][:train_data_end_idx]
         mms = MinMaxScaler((-1,1))
         train_x = mms.fit_transform(train_x)
@@ -96,7 +99,7 @@ def realtime_test(X, ret, label, bm, ts_layer, is_quantile):
         test_x = torch.tensor(test_x.reshape(-1, seq_len, len(bm_related_cols)), dtype=torch.float32).to(device)
         test_y = label.iloc[test_idx]
 
-        net = MyModel(seq_len, len(bm_related_cols), num_heads, ts_layer, is_quantile).to(device)
+        net = MyModel(seq_len, len(bm_related_cols), num_heads, args.ts_layer, args.quantile).to(device)
         optimizer = optim.Adam(net.parameters(), lr=lr)
         for epoch in range(epochs):
             tloss = 0.0
@@ -116,7 +119,7 @@ def realtime_test(X, ret, label, bm, ts_layer, is_quantile):
                 outputs[outputs > criterion] = 1.0
                 outputs[outputs < criterion] = 0.0
                 label_copied = train_label.clone().detach()
-                if is_quantile:
+                if args.quantile:
                     label_copied[label_copied > criterion] = 1.0
                     label_copied[label_copied < criterion] = 0.0
                 tcorrect += torch.sum(outputs == label_copied).item()

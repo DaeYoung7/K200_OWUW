@@ -9,6 +9,7 @@ bm_name = 'K200'
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--test', action='store_true', default=False)  # true - test, false - kfold
+    parser.add_argument('--corr', action='store_true', default=False)
     parser.add_argument('--quantile', action='store_true', default=False)  # true - quantile, false - binary classification
     parser.add_argument('--ts_layer', required=True)  # transformer or lstm
     args = parser.parse_args()
@@ -23,7 +24,7 @@ if __name__ == '__main__':
     print(f'data shape : {data.shape}')
     print('\n[Start Learning]')
     if args.test:
-        y_pred, test_label = realtime_test(data, ret, label, bm, args.ts_layer, args.quantile)
+        y_pred, test_label = realtime_test(data, ret, label, bm, args)
         pred_label = save_result(y_pred, test_label, bm_name, args.quantile)
         analyzing(pred_label, test_label)
     else:
