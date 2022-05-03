@@ -39,18 +39,10 @@ def is_stationary(tseries):
         ret = True
     return ret
 
-def save_result(y_pred, test_label, dates, bm_name):
-    pred_label = np.array(y_pred.copy())
-    y_pred = pd.DataFrame(pred_label, columns=['pred_label'])
-    test_label = pd.DataFrame(test_label, columns=['test_label'])
-    result = pd.concat([y_pred, test_label], axis=1)
-    result['date'] = dates
-    result = result.set_index('date')
-    result.to_csv('result/'+bm_name+'.csv')
-    return pred_label
+def analyzing(y_pred, label, name):
+    print(name)
+    print(accuracy_score(label, y_pred))
+    print(confusion_matrix(label, y_pred, labels=[0, 1]))
+    print(classification_report(label, y_pred, labels=[0,1]))
 
-def analyzing(pred_label, test_label):
-    print(accuracy_score(test_label, pred_label))
-    print(confusion_matrix(test_label, pred_label, labels=[0, 1]))
-    print(classification_report(test_label, pred_label, labels=[0,1]))
     return
