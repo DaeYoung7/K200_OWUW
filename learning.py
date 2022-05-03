@@ -20,7 +20,7 @@ def realtime_test(X, y):
     result = pd.DataFrame(columns=list(X.columns)+['LR', 'SVC', 'label'])
 
     year_check = 1
-    train_end_date = pd.Timestamp(year=2012, month=1, day=1)
+    train_end_date = pd.Timestamp(year=2017, month=8, day=1)
     next_train_end_date = train_end_date + pd.DateOffset(weeks=1)
     test_date = train_end_date + pd.DateOffset(months=1)
     next_test_date = next_train_end_date + pd.DateOffset(months=1)
@@ -31,8 +31,8 @@ def realtime_test(X, y):
             print(train_end_date)
             year_check = train_end_date.month
         train_end_idx = sum(X.index < train_end_date)
-        test_idx = sum(X.index < test_date) + 1
-        next_test_idx = sum(X.index < next_test_date) + 1
+        test_idx = sum(X.index < test_date)
+        next_test_idx = sum(X.index < next_test_date)
 
         train_x = X[:train_end_idx].values
         mms = MinMaxScaler((0,1))
