@@ -12,34 +12,45 @@ lr = 1e-4
 batch_size = 32
 seq_len = 252
 num_heads = 4
-corr_term = 252 * 1
+num_cols_rfe = 5
 p = inflect.engine()
 
 
+def RFE(X, y):
+    df_x = pd.DataFrame(X)
+    while len(df_x.columns) < num_cols_rfe:
+        RF_model = RandomForestClassifier(max_depth=40, max_features=16, n_estimators=100)
+        RF_model.fit(X, y)
+        fimp = RF_model.feature_importances_
+        print(fimp)
+        break
+    return
+
+
+def get_seq_data(data, label):
+    train_x = []
+    train_y = []
+    test_x = []
+    test_y = []
+
+
+
+
 def realtime_test(X, y):
-    result = pd.DataFrame(columns=list(X.columns)+['LR', 'SVC', 'label'])
+    result = pd.DataFrame(columns=['pred', 'label'])
 
     month_check = 1
-    train_end_date = pd.Timestamp(year=2012, month=1, day=1)
-    next_train_end_date = train_end_date + pd.DateOffset(weeks=1)
+    train_end_date = pd.Timestamp(year=2017, month=1, day=1)
     test_date = train_end_date + pd.DateOffset(months=1)
-    next_test_date = next_train_end_date + pd.DateOffset(months=1)
     while test_date < X.index[-1] - pd.DateOffset(weeks=1):
         if month_check != train_end_date.month:
             print(train_end_date)
             month_check = train_end_date.month
         train_end_idx = sum(X.index < train_end_date)
         test_idx = sum(X.index < test_date)
-        next_test_idx = sum(X.index < next_test_date)
-        if next_test_idx - test_idx < 1:
-            train_end_date = next_train_end_date
-            next_train_end_date += pd.DateOffset(weeks=1)
-            test_date = next_test_date
-            next_test_date = next_train_end_date + pd.DateOffset(months=1)
-            continue
 
         train_x = X[:train_end_idx].values
-        mms = MinMaxScaler((0,1))
+        mms = MinMaxScaler((-1,1))
         train_x = mms.fit_transform(train_x)
         train_y = y[:train_end_idx].values.ravel()
         test_x = mms.transform(X.iloc[test_idx:next_test_idx].values)
