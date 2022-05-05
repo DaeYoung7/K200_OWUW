@@ -1,5 +1,6 @@
 import os
 import inflect
+from collections import defaultdict
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
@@ -27,13 +28,34 @@ def RFE(X, y):
     return
 
 
-def get_seq_data(data, label):
+def get_seq_data(data, label, seq_len):
+    train_dates = []
     train_x = []
     train_y = []
+    test_dates = []
     test_x = []
     test_y = []
+    a = defaultdict(dict)
 
+    idx = seq_len
+    while idx < len(data):
+        train_date = data.index[idx]
+        test_date = train_date + pd.DateOffset(months=1)
+        test_idx = sum(data.index < test_date)
+        if data.index[test_idx] in test_dates:
+            continue
 
+        train_dates.append(train_date)
+        train_x.append(data[idx-seq_len:idx])
+        train_y.append(label.iloc[idx])
+
+        test_dates.append(train_date)
+        test_x.append(data[test_idx-seq_len:test_idx])
+        test_y.append(data.iloc[test_idx])
+        idx += 1
+        if idx > 100:
+            break
+    train_data =
 
 
 def realtime_test(X, y):
