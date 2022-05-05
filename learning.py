@@ -22,7 +22,7 @@ epochs = 50
 lr = 1e-4
 batch_size = 32
 seq_len = 252
-num_heads = 4
+num_heads = 6
 corr_term = 252 * 1
 p = inflect.engine()
 
