@@ -115,7 +115,7 @@ def realtime_test(X, label, ret, is_quantile):
             avg_loss = tloss / len_loader
             tcorrect /= total_len
             print(f'Epoch {epoch + 1}  accuracy {round(tcorrect, 4)}  loss {round(avg_loss, 4)}')
-            if tcorrect > 0.5:
+            if tcorrect > 0.8:
                 break
         net.eval()
         y_pred = net(test_x).detach().item()
@@ -126,8 +126,6 @@ def realtime_test(X, label, ret, is_quantile):
         test_date = train_end_date + pd.DateOffset(months=1)
         train_end_idx = sum(X.index < train_end_date)
         test_idx = sum(X.index < test_date)
-        if len(result) > 4:
-            break
     result.index.name = 'date'
     print(result)
     return result
