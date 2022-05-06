@@ -4,7 +4,8 @@ from learning import *
 import argparse
 
 bm_name = 'K200'
-from sklearn.preprocessing import MinMaxScaler
+is_quantile = False
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     # data, data_all_day = read_data(bm_name)
@@ -15,10 +16,11 @@ if __name__ == '__main__':
     # data = data.loc[label.index]
     data = pd.read_csv('data/data_preprocessed.csv', index_col='date', parse_dates=True)
     label = pd.read_csv('data/label.csv', index_col='date', parse_dates=True)
+    ret = pd.read_csv('data/return.csv', index_col='date', parse_dates=True)
     print('[Complete data managing]')
     print(f'data shape : {data.shape}')
     print('\n[Start Learning]')
-    result_data = realtime_test(data, label)
+    result_data = realtime_test(data, label, ret, is_quantile)
     # result_data.to_csv('result/LR_SVC.csv')
     # result_data = pd.read_csv('result/LR_SVC.csv', index_col='date', parse_dates=True)
     rf_pred, rf_label = ensemble(result_data)
