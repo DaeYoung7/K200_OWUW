@@ -86,7 +86,7 @@ def realtime_test(X, label, ret, is_quantile):
         train_loader = data_loader(train_x, train_y, batch_size, seq_len)
         test_x = mms.transform(X[rfe_cols][test_idx - seq_len:test_idx])
         test_x = torch.tensor(test_x.reshape(-1, seq_len, len(X.columns)), dtype=torch.float32).to(device)
-        test_y = y.iloc[test_idx]
+        test_y = y.iloc[test_idx].values
 
         net = SimpleModel(len(rfe_cols), seq_len, is_quantile).to(device)
         optimizer = optim.Adam(net.parameters(), lr=lr)
@@ -115,46 +115,19 @@ def realtime_test(X, label, ret, is_quantile):
             avg_loss = tloss / len_loader
             tcorrect /= total_len
             print(f'Epoch {epoch + 1}  accuracy {round(tcorrect, 4)}  loss {round(avg_loss, 4)}')
-            if tcorrect > 0.8:
+            if tcorrect > 0.5:
                 break
         net.eval()
-        result.loc[X.index[test_idx]] = [net(test_x).detach().item(), test_y]
+        y_pred = net(test_x).detach().item()
+        y_pred = 1. if y_pred > criterion else 0.
+        result.loc[X.index[test_idx]] = [y_pred, test_y]
 
         train_end_date += pd.DateOffset(weeks=1)
         test_date = train_end_date + pd.DateOffset(months=1)
         train_end_idx = sum(X.index < train_end_date)
         test_idx = sum(X.index < test_date)
-
+        if len(result) > 4:
+            break
     result.index.name = 'date'
+    print(result)
     return result
-
-def ensemble(data):
-    y = data['label']
-    X = data.drop(['label'], axis=1)
-
-    train_end_date = pd.Timestamp(year=2018, month=1, day=1)
-    test_date = train_end_date + pd.DateOffset(months=1)
-    month_check = 1
-
-    rf_preds = []
-    rf_labels = []
-    while test_date < X.index[-1]:
-        if month_check != train_end_date.month:
-            print(train_end_date)
-            month_check = train_end_date.month
-        train_end_idx = sum(X.index < train_end_date)
-        test_idx = sum(X.index < test_date)
-        train_x = X[:train_end_idx].values
-        train_y = y[:train_end_idx].values.ravel()
-        test_x = X.iloc[test_idx].values.reshape(1,-1)
-        test_y = y.iloc[test_idx]
-        RF_model = RandomForestClassifier(max_depth=40, max_features=16, n_estimators=100)
-        RF_model.fit(train_x, train_y)
-        rf_pred = RF_model.predict(test_x)
-
-        rf_preds.append(rf_pred)
-        rf_labels.append(test_y)
-
-        train_end_date += pd.DateOffset(weeks=1)
-        test_date = train_end_date + pd.DateOffset(months=1)
-    return np.array(rf_preds), np.array(rf_labels)

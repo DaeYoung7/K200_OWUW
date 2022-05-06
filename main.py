@@ -1,3 +1,5 @@
+import pandas as pd
+
 from data_manager import *
 from learning import *
 
@@ -21,10 +23,5 @@ if __name__ == '__main__':
     print(f'data shape : {data.shape}')
     print('\n[Start Learning]')
     result_data = realtime_test(data, label, ret, is_quantile)
-    # result_data.to_csv('result/LR_SVC.csv')
-    # result_data = pd.read_csv('result/LR_SVC.csv', index_col='date', parse_dates=True)
-    rf_pred, rf_label = ensemble(result_data)
-    analyzing(result_data['LR'], result_data['label'], 'LR')
-    analyzing(result_data['SVC'], result_data['label'], 'SVC')
-    analyzing(rf_pred, rf_label, 'RF')
+    analyzing(result_data['pred'], result_data['label'], 'lstm')
     print('[Finish Learning]')
