@@ -60,10 +60,12 @@ def realtime_test(X, ret, label, bm, args):
         y = ret.copy()
         loss_fn = nn.MSELoss()
         criterion = 0.
+        stop_condition = 0.75
     else:
         y = label.copy()
         loss_fn = nn.BCELoss()
         criterion = 0.5
+        stop_condition = 0.9
 
     filepath = 'result/learning.csv'
     if os.path.exists(filepath):
@@ -126,7 +128,7 @@ def realtime_test(X, ret, label, bm, args):
             avg_loss = tloss / i
             tcorrect /= total_len
             print(f'Epoch {epoch+1}  accuracy {round(tcorrect, 4)}  loss {round(avg_loss, 4)}')
-            if tcorrect > 0.75:
+            if tcorrect > stop_condition:
                 break
         net.eval()
         y_pred.append(net(test_x).detach().item())
