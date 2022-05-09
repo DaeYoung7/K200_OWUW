@@ -8,6 +8,7 @@ import torch.cuda
 from sklearn.preprocessing import MinMaxScaler
 from torch.utils.data import TensorDataset, DataLoader
 import torch.optim as optim
+from torch.optim.lr_scheduler import StepLR
 
 from model import *
 
@@ -18,7 +19,7 @@ else:
     device_name = 'cpu'
     print('Use CPU')
 device = torch.device(device_name)
-epochs = 50
+epochs = 200
 lr = 1e-4
 batch_size = 32
 seq_len = 252
@@ -65,24 +66,20 @@ def realtime_test(X, ret, label, bm, args):
         criterion = 0.5
 
     filepath = 'result/learning.csv'
-    month_check = 1
     if os.path.exists(filepath):
         last_result = pd.read_csv(filepath, index_col='date', parse_dates=True)
         train_data_end_date = last_result.index[-1] + pd.DateOffset(weeks=1) - pd.DateOffset(months=1)
-        month_check = train_data_end_date.month
     else:
         last_result = pd.DataFrame()
         train_data_end_date = pd.Timestamp(year=2016, month=1, day=1)
     test_date = train_data_end_date + pd.DateOffset(months=1)
 
     while test_date < X.index[-1] - pd.DateOffset(months=1):
-        # 1달마다 저장
-        if month_check != train_data_end_date.month:
-            print(train_data_end_date)
-            month_check = train_data_end_date.month
-            result = pd.DataFrame({'date':dates, 'pred_ret':y_pred, 'test_label':test_label})
-            result = pd.concat([last_result, result.set_index('date')])
-            result.to_csv(filepath)
+        print(train_data_end_date)
+        result = pd.DataFrame({'date':dates, 'pred_ret':y_pred, 'test_label':test_label})
+        result = pd.concat([last_result, result.set_index('date')])
+        result.to_csv(filepath)
+
         train_data_end_idx = sum(X.index < train_data_end_date)
         test_idx = sum(X.index < test_date) + 1
 
@@ -101,6 +98,7 @@ def realtime_test(X, ret, label, bm, args):
 
         net = MyModel(seq_len, len(bm_related_cols), num_heads, args.ts_layer, args.quantile).to(device)
         optimizer = optim.Adam(net.parameters(), lr=lr)
+        scheduler = StepLR(optimizer, step_size=100, gamma=0.1)
         for epoch in range(epochs):
             tloss = 0.0
             tcorrect = 0.0
@@ -124,10 +122,11 @@ def realtime_test(X, ret, label, bm, args):
                     label_copied[label_copied < criterion] = 0.0
                 tcorrect += torch.sum(outputs == label_copied).item()
                 total_len += len(train_label)
+            scheduler.step()
             avg_loss = tloss / i
             tcorrect /= total_len
             print(f'Epoch {epoch+1}  accuracy {round(tcorrect, 4)}  loss {round(avg_loss, 4)}')
-            if tcorrect > 0.8:
+            if tcorrect > 0.75:
                 break
         net.eval()
         y_pred.append(net(test_x).detach().item())
