@@ -60,7 +60,7 @@ def realtime_test(X, ret, label, bm, args):
         y = ret.copy()
         loss_fn = nn.MSELoss()
         criterion = 0.
-        stop_condition = 0.75
+        stop_condition = 0.72
     else:
         y = label.copy()
         loss_fn = nn.BCELoss()
